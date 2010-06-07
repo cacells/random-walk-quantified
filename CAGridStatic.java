@@ -43,6 +43,7 @@ public class CAGridStatic {
 		//System.out.println("max lineage "+lineage);
 		//int sc = (int)(64*64*frac);  Calculate the number of SC required for this grid size for a given fraction
 		for (int x = 0; x < size; x++) { //  Loop through all the boxes in the grid 
+			//if (grid[x][0].occupant.type == 1) System.out.println("grid spot" + grid[x][0].x);
 		        for (int xx = x - 1; xx <= x + 1; xx++) {
 						if(x!=xx) // Form links with their 2 immediate neighbours
 			            grid[x][0].addNeighbour(grid[bounds(xx,size)][0]);
@@ -50,6 +51,7 @@ public class CAGridStatic {
 			    }
 			
 	    } 
+		
 		savedx = new int[maxit];
 		savedy = new int[maxit];
 	}

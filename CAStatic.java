@@ -9,6 +9,7 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
+import java.io.IOException;
 
 import java.util.*;
  
@@ -17,8 +18,10 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
     CAGridStatic experiment;
     int[][] savedvals;
     int maxRun = 200;
-    int[] savedd = new int[maxRun];
-    int[] saveddsq = new int[maxRun];
+	int maxit = 20;
+    int[] savedd;// = new int[maxRun];
+    int[] saveddsq;
+    int[] dCount;
     int runCount = 0;
     int epsCount = 0;
     int newframe = 0;
@@ -31,11 +34,11 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	JButton startBtn,writeBtn,paramsBtn,wrapBtn;
 	JTextArea msgBtn;
 	JPanel buttonHolder;
-	int scale = 20;
 	int iterations;
+	int scale = 20;
 	int gSize;
 	int maxCellType;
-	int maxit = 10;
+
 	boolean started = false;
     Colour palette = new Colour();
 	int[] colorindices = {0,1,2,54,4,5};
@@ -47,9 +50,10 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	public CAStatic(int size) {
 
 	    gSize=size;
-		//experiment = new CAGridStatic(size, maxC);
-	    int tint = (int)Math.ceil((double)(400*maxit)/(double)gSize)+(480-384);
 
+		//experiment = new CAGridStatic(size, maxC);
+	    //int tint = (int)Math.ceil((double)(400*maxit)/(double)gSize)+(480-384);
+	    int tint = (int)Math.ceil((double)(400*100)/(double)gSize)+(480-384);
 		//add 20 to x and 60 to y bcos not printing onto the full frame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Container mainWindow = getContentPane();
@@ -134,13 +138,17 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	}
 	
 	public void saveStats() {
-        int val;
+        int val,ind;
 		//backGr1.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		for (CACell c : experiment.tissue){
 			if (c.type == 1){
-				val = c.home.x - 31;
+				ind = c.home.x;
+				val = ind - 31;
 				savedd[runCount] = val;
 				saveddsq[runCount] = val*val;
+				//System.out.println("d dsq "+val+" "+val*val);
+				dCount[ind]++;
+				drawCount(ind);
 			}
 		}
 	}
@@ -148,14 +156,30 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	public void showStats(){
 		int sumd = 0,sumdsq = 0;
 		int maxd = 0,mind=gSize-1;
-		for (int i=0;i<maxRun;i++){
+		for (int i=0;i<runCount;i++){
 			sumd = sumd + savedd[i];
 			sumdsq = sumdsq + saveddsq[i];
 			if (savedd[i] < mind) mind = savedd[i];
 			if (savedd[i] > maxd) maxd = savedd[i];
 		}
-		System.out.println("av d: "+sumd/maxRun+" av d sq "+((float)sumdsq)/((float)maxRun));
+		if (runCount > 0){
+		System.out.println("av d: "+(float)sumd/(float)runCount+" av d sq "+((float)sumdsq)/((float)runCount));
 		System.out.println("range of d: "+ mind + " to " + maxd);
+		java.io.FileWriter file;
+		try {
+			file = new java.io.FileWriter("stuff.dat");
+			java.io.BufferedWriter buffer = new java.io.BufferedWriter(file);
+			for (int i=0;i<runCount;i++){
+				buffer.write(savedd[i]+" "+saveddsq[i]+"\n");
+			}
+			buffer.close();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		}
 	}
 	
 	public void outputEPS(){
@@ -188,8 +212,13 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		}
 	    CApicture.updateGraphic();
 	}
+	public void drawCount(int ind) {		
+		CApicture.drawCircleAt(ind,dCount[ind],javaColours[1],2);
+	    CApicture.updateGraphic();
+	}
+	
 	public void drawLines() {
-      	//CApicture.clearCAPanel();
+
 		for (CACell c : experiment.tissue){
 			if ((iterations > 0) && (c.type == 1))
 				CApicture.drawALine(experiment.savedx[iterations-1],iterations-1,
@@ -200,6 +229,9 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 
 	public void start() {
         //initialise();
+	    savedd = new int[maxRun];
+	    saveddsq = new int[maxRun];
+	    dCount = new int[gSize]; ;
         started = true;
 		if (runner == null) {
 			runner = new Thread(this);
@@ -246,27 +278,29 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	public void run() {
 
 
-        for (runCount=0;runCount<maxRun;runCount++){
-        initialise();
-		saveCA();
-		while ((iterations < maxit) && (runner == Thread.currentThread())) {
-			
-			experiment.iterate();
-			saveCA();
-			//drawCA();
-			if ((runCount%10) == 0) drawLines();
-			iterations++;
-			//newframe = 0;		
-			//while(newframe<500000) newframe++;
-			//if((iterations%5)==0)postscriptPrint("CA"+iterations+".eps");
-			// This will produce a postscript output of the tissue
+		for (runCount=0;runCount<maxRun;runCount++){
+			if (runner == Thread.currentThread()){
+			initialise();
+			//beth saveCA();
+			while ((iterations < maxit) && (runner == Thread.currentThread())) {
+				saveCA();
+				experiment.iterate();
+				//drawCA();
+				//if ((runCount%10) == 0) 
+					drawLines();
+					iterations++;
+				//newframe = 0;		
+				//while(newframe<500000) newframe++;
+				//if((iterations%5)==0)postscriptPrint("CA"+iterations+".eps");
+				// This will produce a postscript output of the tissue
+			}
+			saveStats();
+			}
 		}
-        saveStats();
-        }
 		//this will print out aborted results
 		//to stop that check if maxit was achieved
-        showStats();
-        stop();
+		showStats();
+		stop();
 	}
 
 
@@ -278,7 +312,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		int xsize = gSize*4;
 		int ysize = (int)Math.ceil((double)(iterations*xsize)/(double)gSize) + 30;
 		xsize = xsize + 30;
-		System.out.println("ysize = "+ysize);
+		//System.out.println("ysize = "+ysize);
 		boolean flag;
 		double[] col = new double[3];//tmp colour holder
 		try {
@@ -344,7 +378,13 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 
     public void initialise(){
 		experiment = new CAGridStatic(gSize,maxit);
-		if (runCount < 1) CApicture.setScale(gSize,maxit,scale);
+		
+		//change call to setScale if just using 1 image
+		if (runCount < 1) {
+			CApicture.setScale(gSize,maxit,scale,gSize,maxRun/2,scale);
+      	    CApicture.clearCAPanel(1);
+      	    CApicture.clearCAPanel(2);
+		}
 		iterations=0;
 
 	}
