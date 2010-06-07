@@ -34,7 +34,13 @@ class CAImagePanel extends JPanel {
 				backGr.fillRect(0,0,this.colums*xScale,rows*yScale);
 				//backGr.fillRect(0,0,20*64,2000);
 		}
-
+		public void clearCAPanel(int minx,int miny,int maxx,int maxyy)
+		{
+				backGr.setColor(Color.orange);
+				backGr.fillRect(minx*xScale,miny*yScale,maxx*xScale,maxyy*yScale);
+				//backGr.fillRect(0,0,20*64,2000);
+		}
+		
 		public void drawCircleAt(int x, int y, Color colour)
 		{
 			backGr.setColor(colour);
@@ -50,7 +56,8 @@ class CAImagePanel extends JPanel {
 		public void updateGraphic() {
 		        Graphics g = this.getGraphics();
 		        if ((backImg != null) && (g != null)) {		        	
-		            g.drawImage(backImg, 0, 0, this.getSize().width, this.getSize().height, 0, 0, (int) (xScale * (colums)), (int) (yScale * (rows)), this);
+		            g.drawImage(backImg, 0, 0, this.getSize().width, this.getSize().height/2, 0, 0, (int) (xScale * (colums)), (int) (yScale * (rows)), this);
+		            g.drawImage(backImg, 0, this.getSize().height/2, this.getSize().width, this.getSize().height, 0, 0, (int) (xScale * (colums)), (int) (yScale * (rows)), this);
 		        }
 		    }
 

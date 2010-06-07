@@ -27,6 +27,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	Image backImg1;
 	Graphics backGr1;
 	CAImagePanel CApicture;
+	CAImagePanel CApicture2;
 	JButton startBtn,writeBtn,paramsBtn,wrapBtn;
 	JTextArea msgBtn;
 	JPanel buttonHolder;
@@ -48,11 +49,12 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	    gSize=size;
 		//experiment = new CAGridStatic(size, maxC);
 	    int tint = (int)Math.ceil((double)(400*maxit)/(double)gSize)+(480-384);
-		setSize(400,tint);
+
 		//add 20 to x and 60 to y bcos not printing onto the full frame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Container mainWindow = getContentPane();
 		mainWindow.setLayout(new BorderLayout());
+		setSize(400,tint);
 
 		buttonHolder = new JPanel();
 		buttonHolder.setLayout(new GridLayout(2,2));
@@ -88,6 +90,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	    
         CApicture = new CAImagePanel();
         mainWindow.add(CApicture,BorderLayout.CENTER);
+
         
 		//not here - doesn't work: CApicture.setScale(gSize,maxit,scale);
 
