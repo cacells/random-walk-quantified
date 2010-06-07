@@ -87,5 +87,19 @@ public class CAGridStatic {
 			cHold.grow();// Test to see if the cell moves
 		}
 	}
-
+	public int iterate(int iters) { // The main iterative loop of the simulation
+        CACell cHold;
+        ArrayList<CACell> moveArray = new ArrayList<CACell>(); // Create a list of cells
+        for (CACell c : tissue) { // loop through the tissue
+		    c.maintain(params); // Updates the status of the tissue
+			if(c.type==1)moveArray.add(c); // If there is a cell, add to cell list
+	    }
+        //for debug System.out.println("yo "+moveArray.size());
+		while(moveArray.size()>0){ // Randomly loop through the list of cells
+			cHold=moveArray.remove(rand.nextInt(moveArray.size()));
+			cHold.grow();// Test to see if the cell moves
+		}
+		iters++;
+		return(iters);
+	}
 }

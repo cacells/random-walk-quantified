@@ -38,6 +38,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	int scale = 20;
 	int gSize;
 	int maxCellType;
+	int maxdCount = 0;
 
 	boolean started = false;
     Colour palette = new Colour();
@@ -105,7 +106,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		setVisible(true);
 		setpalette();
 		iterations = 0;
-		savedvals = new int[gSize][maxit];
+		savedvals = new int[maxRun][maxit];
 		
 	}
 	
@@ -125,11 +126,12 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		int a;
 		int xv,yv;
 		yv = iterations;
+		//iterations should be correct to use as array ref
 		//backGr1.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		for (CACell c : experiment.tissue){
 			xv = c.home.x;
 			a = c.lineage;
-			savedvals[xv][yv] = a;
+			//savedvals[xv][yv] = a;
 			if (c.type == 1){
 				experiment.savedx[iterations] = c.home.x;
 				experiment.savedy[iterations] = iterations;
@@ -139,23 +141,23 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	
 	public void saveStats() {
         int val,ind;
+		java.io.FileWriter file;
 		//backGr1.fillRect(0, 0, this.getSize().width, this.getSize().height);
-		for (CACell c : experiment.tissue){
-			if (c.type == 1){
-				ind = c.home.x;
-				val = ind - 31;
-				savedd[runCount] = val;
-				saveddsq[runCount] = val*val;
-				//System.out.println("d dsq "+val+" "+val*val);
-				dCount[ind]++;
-				drawCount(ind);
-			}
-		}
+		//System.out.println("iterations "+iterations);
+		ind = experiment.savedx[iterations-1];//should be maxit-1 but might get aborted?
+        val = ind - 31;
+		savedd[runCount] = val;
+		saveddsq[runCount] = val*val;
+		dCount[ind]++;
+		drawCount(ind);
+        for (int i=0;i<iterations;i++) savedvals[runCount][i] = experiment.savedx[i];
 	}
 	
 	public void showStats(){
 		int sumd = 0,sumdsq = 0;
 		int maxd = 0,mind=gSize-1;
+        maxdCount = 0;
+		for (int i=0;i<gSize;i++) if (dCount[i] > maxdCount) maxdCount = dCount[i];
 		for (int i=0;i<runCount;i++){
 			sumd = sumd + savedd[i];
 			sumdsq = sumdsq + saveddsq[i];
@@ -165,7 +167,8 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		if (runCount > 0){
 		System.out.println("av d: "+(float)sumd/(float)runCount+" av d sq "+((float)sumdsq)/((float)runCount));
 		System.out.println("range of d: "+ mind + " to " + maxd);
-		java.io.FileWriter file;
+		System.out.println("maxdCount " + maxdCount);
+	/*for debug	java.io.FileWriter file;
 		try {
 			file = new java.io.FileWriter("stuff.dat");
 			java.io.BufferedWriter buffer = new java.io.BufferedWriter(file);
@@ -177,7 +180,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 
 		}
 	}
@@ -185,7 +188,8 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	public void outputEPS(){
 	  epsCount++;
 	  String probstring = CAGridStatic.params.filename();	  
-	  postscriptPrint("CA"+iterations+"."+probstring+"."+epsCount+".eps");
+	  //postscriptPrint("CA"+iterations+"."+probstring+"."+epsCount+".eps");
+	  printEPSDots("CA"+iterations+"."+probstring+"."+epsCount+".eps");
 	}
 	
 	public void changeParameters(){
@@ -219,12 +223,11 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	
 	public void drawLines() {
 
-		for (CACell c : experiment.tissue){
-			if ((iterations > 0) && (c.type == 1))
+			if (iterations > 0) {
 				CApicture.drawALine(experiment.savedx[iterations-1],iterations-1,
 						experiment.savedx[iterations],iterations,javaColours[1]);
-		}
 	    CApicture.updateGraphic();
+			}
 	}
 
 	public void start() {
@@ -281,15 +284,16 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		for (runCount=0;runCount<maxRun;runCount++){
 			if (runner == Thread.currentThread()){
 			initialise();
-			//beth saveCA();
+			saveCA();
+			iterations++;
 			while ((iterations < maxit) && (runner == Thread.currentThread())) {
-				saveCA();
 				experiment.iterate();
+				saveCA();
 				//drawCA();
 				//if ((runCount%10) == 0) 
 					drawLines();
 					iterations++;
-				//newframe = 0;		
+					//newframe = 0;		
 				//while(newframe<500000) newframe++;
 				//if((iterations%5)==0)postscriptPrint("CA"+iterations+".eps");
 				// This will produce a postscript output of the tissue
@@ -376,7 +380,74 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		}
 	}
 
-    public void initialise(){
+	public void printEPSDots(String fileName) {
+		int xx;
+		int yy;
+		int a;
+		int state;
+		int xsize = gSize*4;
+		int ysize = (int)Math.ceil((double)(maxdCount*xsize)/(double)gSize) + 30;
+		int ysize2 = (int)Math.ceil((double)((maxit)*xsize)/(double)gSize) + 10;
+		xsize = xsize + 30;
+		//System.out.println("ysize = "+ysize);
+		boolean flag;
+		double[] col = new double[3];//tmp colour holder
+		try {
+			java.io.FileWriter file = new java.io.FileWriter(fileName);
+			java.io.BufferedWriter buffer = new java.io.BufferedWriter(file);
+			System.out.println(fileName);
+			buffer.write("%!PS-Adobe-2.0 EPSF-2.0");
+			buffer.newLine();
+			buffer.write("%%Title: test.eps");
+			buffer.newLine();
+			buffer.write("%%Creator: gnuplot 4.2 patchlevel 4");
+			buffer.newLine();
+			buffer.write("%%CreationDate: Thu Jun  4 14:16:00 2009");
+			buffer.newLine();
+			buffer.write("%%DocumentFonts: (atend)");
+			buffer.newLine();
+			buffer.write("%%BoundingBox: 0 0 "+xsize+" "+(ysize+ysize2));
+			buffer.newLine();
+			buffer.write("%%EndComments");
+			buffer.newLine();
+			buffer.write("/lg {0.9 0.9 0.9 setrgbcolor} bind def\n");
+			for (xx = 0;xx < nnw+1; xx++){
+                col = epsColours[xx];
+                buffer.write("/sc"+xx+" {"+col[0]+" "+col[1]+" "+col[2]+" setrgbcolor} bind def\n");
+			}
+			buffer.write("/fillrect {/y2 exch def /x2 exch def /y1 exch def /x1 exch def newpath x1 y1 moveto x2 y1 lineto x2 y2 lineto x1 y2 lineto closepath fill} bind def\n");
+			buffer.write("/dodot {/yval exch def /xval exch def newpath xval yval 1.5 0 360 arc fill} def\n");
+			//for (CACell c : experiment.tissue){
+			buffer.write("lg\n");
+			buffer.write("10 10 "+(xsize-10)+" "+(ysize-10)+" fillrect\n");
+			buffer.write("sc1\n");//colour 1 is red
+			for (xx = 0; xx < gSize; xx++) {
+				for (yy = 0; yy < dCount[xx]; yy++) {
+					buffer.write( (xx*4+20) + " " + (ysize-yy*4-20) + " dodot\n");
+				}
+			}
+            buffer.write("0 "+ysize+" translate\n");
+			for (int i = 0; i < runCount; i++) {
+				xx = savedvals[i][0];
+				buffer.write("newpath \n"+ (xx*4+20) + " " + (ysize2-20) + " moveto\n");
+				for (yy = 1; yy < maxit; yy++) {
+					xx = savedvals[i][yy];
+					buffer.write( (xx*4+20) + " " + (ysize2-yy*4-20) + " lineto\n");
+				}
+				buffer.write("stroke\n");
+			}
+			buffer.write("showpage");
+			buffer.newLine();
+			buffer.write("%%Trailer");
+			buffer.newLine();
+			buffer.write("%%DocumentFonts: Helvetica");
+			buffer.newLine();
+			buffer.close();
+		} catch (java.io.IOException e) {
+			System.out.println(e.toString());
+		}
+	}
+	public void initialise(){
 		experiment = new CAGridStatic(gSize,maxit);
 		
 		//change call to setScale if just using 1 image
