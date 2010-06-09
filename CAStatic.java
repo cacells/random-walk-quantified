@@ -17,7 +17,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 
     CAGridStatic experiment;
     int[][] savedvals;
-    int maxRun = 200;
+    int maxRun =100;
 	int maxit = 20;
     int[] savedd;// = new int[maxRun];
     int[] saveddsq;
@@ -54,7 +54,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 
 		//experiment = new CAGridStatic(size, maxC);
 	    //int tint = (int)Math.ceil((double)(400*maxit)/(double)gSize)+(480-384);
-	    int tint = (int)Math.ceil((double)(400*100)/(double)gSize)+(480-384);
+	    int tint = (int)Math.ceil((double)(400*(maxRun/2+maxit))/(double)gSize)+(480-384);
 		//add 20 to x and 60 to y bcos not printing onto the full frame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Container mainWindow = getContentPane();
@@ -165,10 +165,11 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 			if (savedd[i] > maxd) maxd = savedd[i];
 		}
 		if (runCount > 0){
-		System.out.println("av d: "+(float)sumd/(float)runCount+" av d sq "+((float)sumdsq)/((float)runCount));
+		System.out.println("av d: "+(float)sumd/(float)(runCount)+" av d sq "+((float)sumdsq)/((float)(runCount)));
 		System.out.println("range of d: "+ mind + " to " + maxd);
 		System.out.println("maxdCount " + maxdCount);
-	/*for debug	java.io.FileWriter file;
+		System.out.println("runCount = "+runCount);
+	   java.io.FileWriter file;
 		try {
 			file = new java.io.FileWriter("stuff.dat");
 			java.io.BufferedWriter buffer = new java.io.BufferedWriter(file);
@@ -180,7 +181,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}*/
+		}
 
 		}
 	}
@@ -279,14 +280,17 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	}
 	
 	public void run() {
-
-
+        int tmprCount = 0;
+        boolean running = true;
 		for (runCount=0;runCount<maxRun;runCount++){
-			if (runner == Thread.currentThread()){
+			running = (runner == Thread.currentThread());
+			if (running){
+
+			System.out.println("runcount "+runCount);
 			initialise();
 			saveCA();
 			iterations++;
-			while ((iterations < maxit) && (runner == Thread.currentThread())) {
+			while ((iterations < maxit)) {
 				experiment.iterate();
 				saveCA();
 				//drawCA();
@@ -298,11 +302,13 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 				//if((iterations%5)==0)postscriptPrint("CA"+iterations+".eps");
 				// This will produce a postscript output of the tissue
 			}
+			tmprCount = runCount;
 			saveStats();
 			}
 		}
 		//this will print out aborted results
 		//to stop that check if maxit was achieved
+		if (!started) runCount = tmprCount+1;//just in case stop was pressed
 		showStats();
 		stop();
 	}
@@ -386,8 +392,8 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		int a;
 		int state;
 		int xsize = gSize*4;
-		int ysize = (int)Math.ceil((double)(maxdCount*xsize)/(double)gSize) + 30;
-		int ysize2 = (int)Math.ceil((double)((maxit)*xsize)/(double)gSize) + 10;
+		int ysize = maxdCount*4 + 20;
+		int ysize2 = (maxit-1)*4 +10;
 		xsize = xsize + 30;
 		//System.out.println("ysize = "+ysize);
 		boolean flag;
@@ -419,20 +425,21 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 			buffer.write("/dodot {/yval exch def /xval exch def newpath xval yval 1.5 0 360 arc fill} def\n");
 			//for (CACell c : experiment.tissue){
 			buffer.write("lg\n");
-			buffer.write("10 10 "+(xsize-10)+" "+(ysize-10)+" fillrect\n");
+			buffer.write("5 5 "+(xsize-5)+" "+(ysize-5)+" fillrect\n");
 			buffer.write("sc1\n");//colour 1 is red
 			for (xx = 0; xx < gSize; xx++) {
 				for (yy = 0; yy < dCount[xx]; yy++) {
-					buffer.write( (xx*4+20) + " " + (ysize-yy*4-20) + " dodot\n");
+					buffer.write( (xx*4+10) + " " + (ysize-yy*4-10) + " dodot\n");
 				}
 			}
             buffer.write("0 "+ysize+" translate\n");
+            System.out.println("runCount from epsprint"+runCount);
 			for (int i = 0; i < runCount; i++) {
 				xx = savedvals[i][0];
-				buffer.write("newpath \n"+ (xx*4+20) + " " + (ysize2-20) + " moveto\n");
+				buffer.write("newpath \n"+ (xx*4+10) + " " + (ysize2-10) + " moveto\n");
 				for (yy = 1; yy < maxit; yy++) {
 					xx = savedvals[i][yy];
-					buffer.write( (xx*4+20) + " " + (ysize2-yy*4-20) + " lineto\n");
+					buffer.write( (xx*4+10) + " " + (ysize2-yy*4-10) + " lineto\n");
 				}
 				buffer.write("stroke\n");
 			}
