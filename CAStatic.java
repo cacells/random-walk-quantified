@@ -30,7 +30,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	Image backImg1;
 	Graphics backGr1;
 	CAImagePanel CApicture;
-	CAImagePanel CApicture2;
+	//CAImagePanel CApicture2;
 	JButton startBtn,writeBtn,paramsBtn,wrapBtn;
 	JTextArea msgBtn;
 	JPanel buttonHolder;
@@ -39,6 +39,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	int gSize;
 	int maxCellType;
 	int maxdCount = 0;
+	int lastDrawn = 0;
 
 	boolean started = false;
     Colour palette = new Colour();
@@ -47,19 +48,25 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 //    Color[] colours = {Color.white,Color.black,Color.green,Color.blue,Color.yellow,Color.red,Color.pink};
     Color[] javaColours;
     double[][] epsColours;
+    String EPSFilename = "file.eps";
+    int rowstoDraw = 60;
     
 	public CAStatic(int size) {
 
 	    gSize=size;
+	    int wscale = 6;//scale for main panel
+	    int btnHeight = 480-384;//found by trial and error - must be a better way!
 
 		//experiment = new CAGridStatic(size, maxC);
 	    //int tint = (int)Math.ceil((double)(400*maxit)/(double)gSize)+(480-384);
-	    int tint = (int)Math.ceil((double)(400*(maxRun/2+maxit))/(double)gSize)+(480-384);
+	    //int tint = (int)Math.ceil((double)(400*(50+maxit))/(double)gSize)+(480-384);
+	    int tint = (maxit + rowstoDraw)*wscale + btnHeight;
+	    //only going to show up to 50 dots in lower panel
 		//add 20 to x and 60 to y bcos not printing onto the full frame
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Container mainWindow = getContentPane();
 		mainWindow.setLayout(new BorderLayout());
-		setSize(400,tint);
+		setSize(gSize*wscale,tint);
 
 		buttonHolder = new JPanel();
 		buttonHolder.setLayout(new GridLayout(2,2));
@@ -94,6 +101,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	    mainWindow.add(msgBtn,BorderLayout.NORTH);
 	    
         CApicture = new CAImagePanel();
+        CApicture.rowstoShow = rowstoDraw;
         mainWindow.add(CApicture,BorderLayout.CENTER);
 
         
@@ -156,7 +164,10 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	public void showStats(){
 		int sumd = 0,sumdsq = 0;
 		int maxd = 0,mind=gSize-1;
+		double p,q;
         maxdCount = 0;
+        p = CAGridStatic.params.pr;
+        q = CAGridStatic.params.pl;
 		for (int i=0;i<gSize;i++) if (dCount[i] > maxdCount) maxdCount = dCount[i];
 		for (int i=0;i<runCount;i++){
 			sumd = sumd + savedd[i];
@@ -165,6 +176,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 			if (savedd[i] > maxd) maxd = savedd[i];
 		}
 		if (runCount > 0){
+		System.out.println("expected d: "+ maxit*(p-q) +" expected dsq " + (maxit*(p+q) + maxit*(maxit-1)*Math.pow(p-q, 2.0)));
 		System.out.println("av d: "+(float)sumd/(float)(runCount)+" av d sq "+((float)sumdsq)/((float)(runCount)));
 		System.out.println("range of d: "+ mind + " to " + maxd);
 		System.out.println("maxdCount " + maxdCount);
@@ -190,7 +202,8 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	  epsCount++;
 	  String probstring = CAGridStatic.params.filename();	  
 	  //postscriptPrint("CA"+iterations+"."+probstring+"."+epsCount+".eps");
-	  printEPSDots("CA"+iterations+"."+probstring+"."+epsCount+".eps");
+	  EPSFilename = "CA"+iterations+"."+probstring+"."+epsCount+".eps";
+	  printEPSDots(EPSFilename);
 	}
 	
 	public void changeParameters(){
@@ -231,8 +244,20 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 			}
 	}
 
+	public void drawLines(int it,int runnum){
+		for (int i = lastDrawn; i < runnum; i++) {
+			for (int yy = 1; yy < it; yy++) {
+				CApicture.drawALine(savedvals[i][yy-1],yy-1,
+						savedvals[i][yy],yy,javaColours[1]);
+			}
+		}
+		lastDrawn = runCount;
+	    CApicture.updateGraphic();
+	}
+	
 	public void start() {
         //initialise();
+		lastDrawn = 0;
 	    savedd = new int[maxRun];
 	    saveddsq = new int[maxRun];
 	    dCount = new int[gSize]; ;
@@ -280,35 +305,36 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	}
 	
 	public void run() {
-        int tmprCount = 0;
-        boolean running = true;
+		int tmprCount = 0;
+		boolean running = true;
 		for (runCount=0;runCount<maxRun;runCount++){
 			running = (runner == Thread.currentThread());
 			if (running){
-
-			System.out.println("runcount "+runCount);
-			initialise();
-			saveCA();
-			iterations++;
-			while ((iterations < maxit)) {
-				experiment.iterate();
+				initialise();
 				saveCA();
-				//drawCA();
-				//if ((runCount%10) == 0) 
-					drawLines();
+				iterations++;
+				while ((iterations < maxit)) {
+					experiment.iterate();
+					saveCA();
+					//drawCA();
+					//if ((runCount%10) == 0) 
+					//drawLines();
 					iterations++;
 					//newframe = 0;		
-				//while(newframe<500000) newframe++;
-				//if((iterations%5)==0)postscriptPrint("CA"+iterations+".eps");
-				// This will produce a postscript output of the tissue
+					//while(newframe<500000) newframe++;
+					//if((iterations%5)==0)postscriptPrint("CA"+iterations+".eps");
+					// This will produce a postscript output of the tissue
+				}
+				tmprCount = runCount;
+				saveStats();
+				if ((runCount%25) == 0) drawLines(maxit,runCount);
 			}
-			tmprCount = runCount;
-			saveStats();
-			}
+
 		}
 		//this will print out aborted results
 		//to stop that check if maxit was achieved
 		if (!started) runCount = tmprCount+1;//just in case stop was pressed
+		//iterations should anyway be equal to maxit
 		showStats();
 		stop();
 	}
@@ -459,7 +485,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		
 		//change call to setScale if just using 1 image
 		if (runCount < 1) {
-			CApicture.setScale(gSize,maxit,scale,gSize,maxRun/2,scale);
+			CApicture.setScale(gSize,maxit,scale,gSize,rowstoDraw,scale);
       	    CApicture.clearCAPanel(1);
       	    CApicture.clearCAPanel(2);
 		}

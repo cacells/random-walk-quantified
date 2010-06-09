@@ -15,6 +15,7 @@ class CAImagePanel extends JPanel {
 		Graphics2D g2;
 		float frac = 1.0f;
 		boolean twoImage = false;
+		int rowstoShow = 100;
 
 		public void setScale(int noColumns,int noRows, int scale)//just one image
 		{
@@ -47,7 +48,8 @@ class CAImagePanel extends JPanel {
 			yScale2 = scale2;
 			botImg= createImage(xScale2*columns2,yScale2*rows2);
 			backGr2= botImg.getGraphics();
-			frac = (float)(xScale*rows)/(float)(xScale*rows + xScale2*rows2);
+			//frac = (float)(xScale*rows)/(float)(xScale*rows + xScale2*rows2);
+			frac = (float)(xScale*rows)/(float)(xScale*rows + xScale2*rowstoShow);
 			twoImage = true;
 		}
 		
@@ -110,6 +112,7 @@ class CAImagePanel extends JPanel {
 		            g.drawImage(topImg, 0, 0, this.getSize().width, (int)(((float)this.getSize().height)*frac), 0, 0, (int) (xScale * (columns)), (int) (yScale * (rows)), this);
 		            if (twoImage)
 		            	g.drawImage(botImg, 0, (int)(((float)this.getSize().height)*frac), this.getSize().width, this.getSize().height, 0, 0, (int) (xScale2 * (columns2)), (int) (yScale2 * (rows2)), this);
+	            	g.drawImage(botImg, 0, (int)(((float)this.getSize().height)*frac), this.getSize().width, this.getSize().height, 0, 0, (int) (xScale2 * (columns2)), (int) (yScale2 * (rowstoShow)), this);
 		        }
 		    }
 
