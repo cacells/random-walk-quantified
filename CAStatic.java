@@ -38,6 +38,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	int iterations;
 	int scale = 20;
 	int gSize;
+	int dsize = 1;
 	int maxCellType;
 	int maxdCount = 0;
 	int lastDrawn = 0;
@@ -57,7 +58,9 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
     
 	public CAStatic(int size) {
 
-	    gSize=size;
+		//size is the size of the area containing cells
+		dsize = size;
+	    gSize=size+2*maxit;
 	    int wscale = 6;//scale for main panel
 	    int btnHeight = 480-384;//found by trial and error - must be a better way!
 
@@ -354,150 +357,8 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	}
 
 
-	public void postscriptPrint(String fileName) {
-		int xx;
-		int yy;
-		int a;
-		int state;
-		int xsize = gSize*4;
-		int ysize = (int)Math.ceil((double)(iterations*xsize)/(double)gSize) + 30;
-		xsize = xsize + 30;
-		//System.out.println("ysize = "+ysize);
-		boolean flag;
-		double[] col = new double[3];//tmp colour holder
-		try {
-			java.io.FileWriter file = new java.io.FileWriter(fileName);
-			java.io.BufferedWriter buffer = new java.io.BufferedWriter(file);
-			System.out.println(fileName);
-			buffer.write("%!PS-Adobe-2.0 EPSF-2.0");
-			buffer.newLine();
-			buffer.write("%%Title: test.eps");
-			buffer.newLine();
-			buffer.write("%%Creator: gnuplot 4.2 patchlevel 4");
-			buffer.newLine();
-			buffer.write("%%CreationDate: Thu Jun  4 14:16:00 2009");
-			buffer.newLine();
-			buffer.write("%%DocumentFonts: (atend)");
-			buffer.newLine();
-			buffer.write("%%BoundingBox: 0 0 "+xsize+" "+ysize);
-			buffer.newLine();
-			buffer.write("%%EndComments");
-			buffer.newLine();
-			for (xx = 0;xx < nnw+1; xx++){
-                col = epsColours[xx];
-                buffer.write("/sc"+xx+" {"+col[0]+" "+col[1]+" "+col[2]+" setrgbcolor} bind def\n");
-			}
-
-			buffer.write("/dodot {/yval exch def /xval exch def newpath xval yval 1.5 0 360 arc fill} def\n");
-			//for (CACell c : experiment.tissue){
-			for (xx = 0; xx < gSize; xx++) {
-				for (yy = 0; yy < iterations; yy++) {
-					a = savedvals[xx][yy];
-					if (a > 0) {//don't print the white ones
-						a = (a-1)%nnw+1;
-						buffer.write("sc"+a+"\n");
-					    buffer.write( (xx*4+20) + " " + (ysize-yy*4-20) + " dodot\n");	
-					}
-				}
-			}
-
-/*				if(c.type>0){
-					xx = (c.home.x * 4) + 20;
-					yy = (c.home.y * 4) + 20;
-					if (c.canStay) {
-						buffer.write("newpath " + xx + " " + yy + " 1.5 0 360 arc fill\n");
-						buffer.write("0 setgray\n");
-						buffer.write("newpath " + xx + " " + yy + " 1.5 0 360 arc  stroke\n");
-					} else {
-						buffer.write("0.75 setgray\n");
-						buffer.write("newpath " + xx + " " + yy + " 1.5 0 360 arc fill\n");
-					}
-				}*/
-//			}
-			buffer.write("showpage");
-			buffer.newLine();
-			buffer.write("%%Trailer");
-			buffer.newLine();
-			buffer.write("%%DocumentFonts: Helvetica");
-			buffer.newLine();
-			buffer.close();
-		} catch (java.io.IOException e) {
-			System.out.println(e.toString());
-		}
-	}
-
-	public void printEPSDots(String fileName) {
-		int xx;
-		int yy;
-		int a;
-		int state;
-		int xsize = gSize*4;
-		int ysize = maxdCount*4 + 20;
-		int ysize2 = (maxit-1)*4 +10;
-		xsize = xsize + 30;
-		//System.out.println("ysize = "+ysize);
-		boolean flag;
-		double[] col = new double[3];//tmp colour holder
-		try {
-			java.io.FileWriter file = new java.io.FileWriter(fileName);
-			java.io.BufferedWriter buffer = new java.io.BufferedWriter(file);
-			System.out.println(fileName);
-			buffer.write("%!PS-Adobe-2.0 EPSF-2.0");
-			buffer.newLine();
-			buffer.write("%%Title: test.eps");
-			buffer.newLine();
-			buffer.write("%%Creator: gnuplot 4.2 patchlevel 4");
-			buffer.newLine();
-			buffer.write("%%CreationDate: Thu Jun  4 14:16:00 2009");
-			buffer.newLine();
-			buffer.write("%%DocumentFonts: (atend)");
-			buffer.newLine();
-			buffer.write("%%BoundingBox: 0 0 "+xsize+" "+(ysize+ysize2));
-			buffer.newLine();
-			buffer.write("%%EndComments");
-			buffer.newLine();
-			buffer.write("/lg {0.9 0.9 0.9 setrgbcolor} bind def\n");
-			for (xx = 0;xx < nnw+1; xx++){
-                col = epsColours[xx];
-                buffer.write("/sc"+xx+" {"+col[0]+" "+col[1]+" "+col[2]+" setrgbcolor} bind def\n");
-			}
-			buffer.write("/fillrect {/y2 exch def /x2 exch def /y1 exch def /x1 exch def newpath x1 y1 moveto x2 y1 lineto x2 y2 lineto x1 y2 lineto closepath fill} bind def\n");
-			buffer.write("/drawrect {/y2 exch def /x2 exch def /y1 exch def /x1 exch def newpath x1 y1 moveto x2 y1 lineto x2 y2 lineto x1 y2 lineto closepath stroke} bind def\n");
-			buffer.write("/dodot {/yval exch def /xval exch def newpath xval yval 1.5 0 360 arc fill} def\n");
-			//for (CACell c : experiment.tissue){
-			buffer.write("0 0 "+xsize+" "+(ysize+ysize2)+" drawrect\n");
-			buffer.write("lg\n");
-			buffer.write("5 5 "+(xsize-5)+" "+(ysize-5)+" fillrect\n");
-			buffer.write("sc1\n");//colour 1 is red
-			for (xx = 0; xx < gSize; xx++) {
-				for (yy = 0; yy < dCount[xx]; yy++) {
-					buffer.write( (xx*4+10) + " " + (ysize-yy*4-10) + " dodot\n");
-				}
-			}
-            buffer.write("0 "+ysize+" translate\n");
-            System.out.println("runCount from epsprint"+runCount);
-			for (int i = 0; i < runCount; i++) {
-				xx = savedvals[i][0];
-				buffer.write("newpath \n"+ (xx*4+10) + " " + (ysize2-10) + " moveto\n");
-				for (yy = 1; yy < maxit; yy++) {
-					xx = savedvals[i][yy];
-					buffer.write( (xx*4+10) + " " + (ysize2-yy*4-10) + " lineto\n");
-				}
-				buffer.write("stroke\n");
-			}
-			buffer.write("showpage");
-			buffer.newLine();
-			buffer.write("%%Trailer");
-			buffer.newLine();
-			buffer.write("%%DocumentFonts: Helvetica");
-			buffer.newLine();
-			buffer.close();
-		} catch (java.io.IOException e) {
-			System.out.println(e.toString());
-		}
-	}
 	public void initialise(){
-		experiment = new CAGridStatic(gSize,maxit);
+		experiment = new CAGridStatic(gSize,maxit,dsize);
 		
 		//change call to setScale if just using 1 image
 		if (runCount < 1) {
@@ -515,11 +376,11 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		double initalSeed = 0.1;
 		if(args.length>0){
 			initalSeed = Double.parseDouble(args[0]);
-			CAStatic s = new CAStatic(64);
+			CAStatic s = new CAStatic(1);
 /*	        s.initialise();
 			s.start();*/
 		}else{
-			CAStatic s = new CAStatic(64);
+			CAStatic s = new CAStatic(1);
 /*	        s.initialise();
 			s.start();*/
 			System.out.println("finished");//one thread gets here

@@ -69,7 +69,8 @@ public void printLaTeX(){
 			buffer.write("\\colorbox{descriptbg}{\\large{Measured Values}}\n");
 			buffer.write("\\bt\n");
 			buffer.write("average distance travelled in "+c.maxit+" moves &  " +twoPlaces.format(c.runStats[2])+"\\\\\n");
-			buffer.write("average square distance for "+c.maxit+" moves & " +twoPlaces.format(c.runStats[3])+"\n");
+			buffer.write("average square distance for "+c.maxit+" moves & " +twoPlaces.format(c.runStats[3])+"\\\\\n");
+			buffer.write("maximum frequency of distance & " +twoPlaces.format(c.runStats[4])+"\n");
 			buffer.write("\\et\n");
 			buffer.write("\\colorbox{descriptbg}{\\large{Visualisation of results}}\n");
 			buffer.write("\\begin{figure}[htbp]\n");

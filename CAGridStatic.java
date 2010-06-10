@@ -13,7 +13,7 @@ public class CAGridStatic {
 	//cells may actually be spaces (type = 0)
 	private Random rand = new Random();
 	
-	public CAGridStatic(int size,int maxit) {// Create new instance of simulation with size of grid maximum CA cycle and fraction of stem cells 
+	public CAGridStatic(int size,int maxit,int dsize) {// Create new instance of simulation with size of grid maximum CA cycle and fraction of stem cells 
         //uncomment for interactive setup params.SetParamVals();//set param vals using windows
  
 		CABoxStatic[][] grid = new CABoxStatic[size][1];// Temporary 2D array to hold boxes in Cartesian grid so that connections can be made
@@ -25,7 +25,7 @@ public class CAGridStatic {
 		for (int x = 0; x < size; x++) {
 			//ttype=rand.nextInt(2);// Cell type set randomly to either 0 or 1
             ttype = 0;
-            if (x == 31 )ttype = 1;
+            if ((x>=maxit) && (x < (maxit+dsize)))ttype = 1;
 			grid[x][0] = new CABoxStatic(x,0);// New instance of CABox created and added to 2D grid
 		    if (ttype == 1){
 				lineage++;
