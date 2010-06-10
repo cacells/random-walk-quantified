@@ -11,14 +11,15 @@ import java.awt.event.*;
 import java.awt.geom.GeneralPath;
 import java.io.IOException;
 
+import java.text.DecimalFormat;
 import java.util.*;
  
 public class CAStatic extends JFrame implements Runnable, ActionListener {
 
     CAGridStatic experiment;
     int[][] savedvals;
-    int maxRun =100;
-	int maxit = 20;
+    int maxRun =200;
+	int maxit = 30;
     int[] savedd;// = new int[maxRun];
     int[] saveddsq;
     int[] dCount;
@@ -50,6 +51,9 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
     double[][] epsColours;
     String EPSFilename = "file.eps";
     int rowstoDraw = 60;
+    ResultsPrinter outPrinter;
+    double[] runStats = new double[6];
+    
     
 	public CAStatic(int size) {
 
@@ -74,7 +78,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		
 	    SpinnerNumberModel model3 = new SpinnerNumberModel(50, 0, 100, 5);
 	    JSpinner spinner3 = new JSpinner(model3);
-        writeBtn = new JButton("Output Postscript");
+        writeBtn = new JButton("Output Results to file");
         writeBtn.addActionListener(this);
  	
         startBtn = new JButton("Start");
@@ -115,6 +119,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		setpalette();
 		iterations = 0;
 		savedvals = new int[maxRun][maxit];
+		outPrinter = new ResultsPrinter(this);
 		
 	}
 	
@@ -162,6 +167,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	}
 	
 	public void showStats(){
+		DecimalFormat twoPlaces = new DecimalFormat("0.00");
 		int sumd = 0,sumdsq = 0;
 		int maxd = 0,mind=gSize-1;
 		double p,q;
@@ -175,13 +181,19 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 			if (savedd[i] < mind) mind = savedd[i];
 			if (savedd[i] > maxd) maxd = savedd[i];
 		}
+		runStats[0] = maxit*(p-q);//expected d
+		runStats[1] = (maxit*(p+q) + maxit*(maxit-1)*Math.pow(p-q, 2.0));//expected dsq
+		runStats[2] = (double)sumd/(double)(runCount);//av d from this run
+		runStats[3] = ((double)sumdsq)/((double)(runCount));
+		runStats[4] = maxdCount;
+		
 		if (runCount > 0){
-		System.out.println("expected d: "+ maxit*(p-q) +" expected dsq " + (maxit*(p+q) + maxit*(maxit-1)*Math.pow(p-q, 2.0)));
-		System.out.println("av d: "+(float)sumd/(float)(runCount)+" av d sq "+((float)sumdsq)/((float)(runCount)));
+		System.out.println("expected d: "+ twoPlaces.format(runStats[0]) +" expected dsq " + twoPlaces.format(runStats[1]));
+		System.out.println("av d: "+twoPlaces.format(runStats[2])+" av d sq "+twoPlaces.format(runStats[3]));
 		System.out.println("range of d: "+ mind + " to " + maxd);
 		System.out.println("maxdCount " + maxdCount);
 		System.out.println("runCount = "+runCount);
-	   java.io.FileWriter file;
+	   /* for debug java.io.FileWriter file;
 		try {
 			file = new java.io.FileWriter("stuff.dat");
 			java.io.BufferedWriter buffer = new java.io.BufferedWriter(file);
@@ -193,17 +205,19 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 
 		}
 	}
 	
 	public void outputEPS(){
 	  epsCount++;
-	  String probstring = CAGridStatic.params.filename();	  
+	  //String probstring = CAGridStatic.params.filename();	  
 	  //postscriptPrint("CA"+iterations+"."+probstring+"."+epsCount+".eps");
-	  EPSFilename = "CA"+iterations+"."+probstring+"."+epsCount+".eps";
-	  printEPSDots(EPSFilename);
+	  //EPSFilename = "CA"+maxit+"_"+probstring+"_"+epsCount+".eps";
+	  outPrinter.makeFilenames();
+	  outPrinter.printEPSDots();
+	  outPrinter.printLaTeX();
 	}
 	
 	public void changeParameters(){
@@ -448,8 +462,10 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
                 buffer.write("/sc"+xx+" {"+col[0]+" "+col[1]+" "+col[2]+" setrgbcolor} bind def\n");
 			}
 			buffer.write("/fillrect {/y2 exch def /x2 exch def /y1 exch def /x1 exch def newpath x1 y1 moveto x2 y1 lineto x2 y2 lineto x1 y2 lineto closepath fill} bind def\n");
+			buffer.write("/drawrect {/y2 exch def /x2 exch def /y1 exch def /x1 exch def newpath x1 y1 moveto x2 y1 lineto x2 y2 lineto x1 y2 lineto closepath stroke} bind def\n");
 			buffer.write("/dodot {/yval exch def /xval exch def newpath xval yval 1.5 0 360 arc fill} def\n");
 			//for (CACell c : experiment.tissue){
+			buffer.write("0 0 "+xsize+" "+(ysize+ysize2)+" drawrect\n");
 			buffer.write("lg\n");
 			buffer.write("5 5 "+(xsize-5)+" "+(ysize-5)+" fillrect\n");
 			buffer.write("sc1\n");//colour 1 is red
