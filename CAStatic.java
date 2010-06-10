@@ -18,7 +18,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 
     CAGridStatic experiment;
     int[][] savedvals;
-    int maxRun =200;
+    int maxRun =100;
 	int maxit = 30;
     int[] savedd;// = new int[maxRun];
     int[] saveddsq;
@@ -42,6 +42,8 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 	int maxCellType;
 	int maxdCount = 0;
 	int lastDrawn = 0;
+	int lin = 1;
+	int linx = maxit + 1;
 
 	boolean started = false;
     Colour palette = new Colour();
@@ -148,11 +150,34 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 			xv = c.home.x;
 			a = c.lineage;
 			//savedvals[xv][yv] = a;
+			if (a == lin){
+			if (iterations == 0) linx = c.home.x;
 			if (c.type == 1){
 				experiment.savedx[iterations] = c.home.x;
 				experiment.savedy[iterations] = iterations;
 			}
+			}
 		}
+	}
+	public void saveCA2() {
+		int a;
+		int xv,yv;
+		yv = iterations;
+		//iterations should be correct to use as array ref
+		//backGr1.fillRect(0, 0, this.getSize().width, this.getSize().height);
+		for (CACell c : experiment.tissue){
+			if (c.type == 1){
+			xv = c.home.x;
+			a = c.lineage;
+			//savedvals[xv][yv] = a;
+			
+			//up to here
+			if (iterations == 0) linx = c.home.x;
+	
+				experiment.savedx[iterations] = c.home.x;
+				experiment.savedy[iterations] = iterations;
+			}
+			}
 	}
 	
 	public void saveStats() {
@@ -161,7 +186,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		//backGr1.fillRect(0, 0, this.getSize().width, this.getSize().height);
 		//System.out.println("iterations "+iterations);
 		ind = experiment.savedx[iterations-1];//should be maxit-1 but might get aborted?
-        val = ind - 31;
+        val = ind - linx;
 		savedd[runCount] = val;
 		saveddsq[runCount] = val*val;
 		dCount[ind]++;
@@ -239,14 +264,15 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 		for (CACell c : experiment.tissue){
 			a = c.lineage;
 			if (a > 0) a = (a-1)%nnw+1;
-			if(a<7){
+			//if(a<7){
 				CApicture.drawCircleAt(c.home.x,iterations,javaColours[a]);
-			}else{
-				CApicture.drawCircleAt(c.home.x,iterations,Color.orange);
-			}
+			//}else{
+				//CApicture.drawCircleAt(c.home.x,iterations,Color.orange);
+			//}
 		}
 	    CApicture.updateGraphic();
 	}
+	
 	public void drawCount(int ind) {		
 		CApicture.drawCircleAt(ind,dCount[ind],javaColours[1],2);
 	    CApicture.updateGraphic();
@@ -333,7 +359,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 				while ((iterations < maxit)) {
 					experiment.iterate();
 					saveCA();
-					//drawCA();
+					drawCA();
 					//if ((runCount%10) == 0) 
 					//drawLines();
 					iterations++;
@@ -344,7 +370,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 				}
 				tmprCount = runCount;
 				saveStats();
-				if ((runCount%25) == 0) drawLines(maxit,runCount);
+				//if ((runCount%25) == 0) drawLines(maxit,runCount);
 			}
 
 		}
@@ -380,7 +406,7 @@ public class CAStatic extends JFrame implements Runnable, ActionListener {
 /*	        s.initialise();
 			s.start();*/
 		}else{
-			CAStatic s = new CAStatic(1);
+			CAStatic s = new CAStatic(6);
 /*	        s.initialise();
 			s.start();*/
 			System.out.println("finished");//one thread gets here

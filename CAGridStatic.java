@@ -7,6 +7,7 @@ import java.util.*;
 public class CAGridStatic {
 	
     int[] savedx;
+    int[][] savedxs;
     int[] savedy;
 	public ArrayList <CACell> tissue;// List of cells that make up the tissue
 	public static ParamVals params = new ParamVals();//parameters of the experiment 
@@ -28,7 +29,7 @@ public class CAGridStatic {
             if ((x>=maxit) && (x < (maxit+dsize)))ttype = 1;
 			grid[x][0] = new CABoxStatic(x,0);// New instance of CABox created and added to 2D grid
 		    if (ttype == 1){
-				lineage++;
+				lineage++;//lineage starts at 1
 		    	cell = new CACell(grid[x][0],lineage);// New instance of CACell created and given unique lineage id
                 cell.type = ttype;
 		    	grid[x][0].occupant = cell;// The new cell is added to the CABox              
@@ -53,6 +54,7 @@ public class CAGridStatic {
 	    } 
 		
 		savedx = new int[maxit];
+		savedxs = new int[dsize][maxit];
 		savedy = new int[maxit];
 	}
 
